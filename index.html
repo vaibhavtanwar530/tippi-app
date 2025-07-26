@@ -3,61 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TipPi - Privacy Policy</title>
+  <title>TipPi - Tipping App</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      line-height: 1.6;
-      margin: 2rem;
-      max-width: 800px;
+      background-color: #f0f2f5;
+      padding: 2rem;
+      text-align: center;
     }
-    h1, h2 {
-      color: #333;
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      display: inline-block;
     }
-    p {
-      margin-bottom: 1rem;
+    h1 {
+      color: #6e3cbc;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #6e3cbc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #status {
+      margin-top: 20px;
+      color: green;
     }
   </style>
 </head>
 <body>
-  <h1>Privacy Policy</h1>
-  <p><strong>Effective Date:</strong> July 26, 2025</p>
-  <p><strong>App Name:</strong> TipPi</p>
-  <p><strong>Developer:</strong> Renu</p>
+  <div class="container">
+    <h1>TipPi</h1>
+    <p>Welcome to TipPi - the simple tipping app built for the Pi Network!</p>
+    <button onclick="loginWithPi()">Login with Pi</button>
+    <button onclick="sendTip()">Send Tip (0.01 π)</button>
+    <div id="status"></div>
+  </div>
 
-  <h2>1. Information We Collect</h2>
-  <p>We collect the following data via the Pi Network SDK:</p>
-  <ul>
-    <li>Pi Network Username</li>
-    <li>Public transaction data related to tipping</li>
-    <li>Non-personal device or browser info (e.g. for analytics)</li>
-  </ul>
-  <p>We do not collect sensitive personal data like phone numbers, emails, or passwords.</p>
+  <script>
+    const Pi = window.Pi;
+    let piUser = null;
 
-  <h2>2. How We Use Your Information</h2>
-  <p>Your information is used to:</p>
-  <ul>
-    <li>Verify your Pi Network identity</li>
-    <li>Enable and record tipping between users</li>
-    <li>Improve the app's functionality and user experience</li>
-  </ul>
+    async function loginWithPi() {
+      try {
+        const scopes = ['username', 'payments'];
+        Pi.init({ version: "2.0" });
+        const user = await Pi.authenticate(scopes, onIncompletePaymentFound);
+        piUser = user;
+        document.getElementById('status').innerText = `Logged in as @${user.username}`;
+      } catch (err) {
+        document.getElementById('status').innerText = 'Login failed.';
+        console.error(err);
+      }
+    }
 
-  <h2>3. Data Sharing</h2>
-  <p>We do not sell or rent your data. We may share data with the Pi Network Core Team if legally or technically required.</p>
+    async function sendTip() {
+      if (!piUser) {
+        alert('Please log in first!');
+        return;
+      }
 
-  <h2>4. Security</h2>
-  <p>We take reasonable steps to protect your data but cannot guarantee 100% security.</p>
+      Pi.createPayment({
+        amount: 0.01,
+        memo: "Thank you for using TipPi!",
+        metadata: { type: "tip", to: "app_owner" },
+        recipient: "pi-app-username" // Replace with your Pi username (Mainnet/Testnet)
+      }, {
+        onReadyForServerApproval: function(paymentId) {
+          console.log("Payment ready for server approval", paymentId);
+        },
+        onReadyForServerCompletion: function(paymentId, txid) {
+          console.log("Payment ready for completion", paymentId, txid);
+        },
+        onCancel: function(paymentId) {
+          console.log("Payment cancelled", paymentId);
+        },
+        onError: function(error, paymentId) {
+          console.error("Payment failed", paymentId, error);
+        }
+      });
+    }
 
-  <h2>5. Third-Party Services</h2>
-  <p>We may use third-party services (e.g. for analytics or hosting), each with its own privacy policies.</p>
-
-  <h2>6. Your Rights</h2>
-  <p>You may request your data be deleted or stop using the app at any time.</p>
-
-  <h2>7. Changes to This Policy</h2>
-  <p>We may update this policy. All updates will be posted here with the new date.</p>
-
-  <h2>8. Contact Us</h2>
-  <p>For privacy questions, email us at: <strong>iamvaibhav.tanwar@gmail.com</strong></p>
+    function onIncompletePaymentFound(payment) {
+      console.log("Incomplete payment found:", payment);
+    }
+  </script>
 </body>
 </html>
